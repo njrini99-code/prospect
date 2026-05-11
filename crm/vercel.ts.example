@@ -1,0 +1,44 @@
+// vercel.ts — modern TypeScript-typed Vercel config (preferred over vercel.json).
+//
+// To adopt:
+//   1. `npm install -D @vercel/config`
+//   2. Delete vercel.json
+//   3. Rename this file to vercel.ts
+//
+// Docs: https://vercel.com/docs/project-configuration/vercel-ts
+//
+// The advantages over vercel.json:
+//   - Full TypeScript type-checking on config options
+//   - Dynamic logic (e.g., different cron schedules per branch via env vars)
+//   - Env var access at config-time
+//   - Route helpers (rewrites/redirects/headers) with strongly-typed signatures
+
+import { type VercelConfig, routes } from "@vercel/config/v1";
+
+export const config: VercelConfig = {
+  framework: "nextjs",
+  regions: ["iad1"],
+  buildCommand: "npm run build",
+  installCommand: "npm install --legacy-peer-deps",
+
+  // Crons — Sunday-night automated rebuilds belong here when Nick deploys.
+  // For now, the Python scripts/build_sales_os.py runs locally on his laptop.
+  crons: [
+    // Example for future use:
+    // { path: "/api/cron/weekly-rebuild", schedule: "0 1 * * 1" }, // Sun 8pm ET = Mon 01:00 UTC
+  ],
+
+  // Security headers (recommended BEFORE first deploy)
+  headers: [
+    routes.headers("/(.*)", {
+      "X-Frame-Options": "DENY",
+      "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "strict-origin-when-cross-origin",
+      "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+      // Add CSP after confirming Tremor / Lucide / shadcn don't break:
+      // "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.neon.tech",
+    }),
+  ],
+};
+
+export default config;

@@ -4,19 +4,37 @@
 # 1) Block everything
 *
 
-# 2) Re-include only what's safe to publish
+# 2) Re-include code + non-PII docs
 !.gitignore
 !README.md
+!MIGRATION.md
 !scripts/
 !scripts/**
+!crm/
+!crm/**
+!.full-stack-feature/
+!.full-stack-feature/**
 
-# Even within scripts, never include any local state files that happen to live there
+# 3) Even within whitelisted dirs, never include local state / secrets / build output
 scripts/_*.txt
 scripts/_*.json
 scripts/__pycache__/
 scripts/*.pyc
 
-# Hard blocks that MUST stay excluded regardless of any future re-include attempt
+crm/node_modules/
+crm/.next/
+crm/.env
+crm/.env.local
+crm/.env.*.local
+crm/coverage/
+crm/test-results/
+crm/playwright-report/
+crm/playwright/.cache/
+crm/.turbo/
+
+.full-stack-feature/state.json
+
+# 4) Hard blocks that MUST stay excluded regardless of any future re-include attempt
 .env
 .env.*
 _sales_os_state.json

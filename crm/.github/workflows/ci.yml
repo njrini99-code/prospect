@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Note: this workflow is VERIFY-ONLY (typecheck + test + build).
+# Deploys are intentionally manual via the `vercel` CLI from Nick's laptop —
+# see crm/RUNBOOK.md for the deploy procedure.
+
+env:
+  NODE_VERSION: "24"
+
+jobs:
+  verify:
+    name: Typecheck + Test + Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: crm/package-lock.json
+
+      - name: Cache Next build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            crm/.next/cache
+            crm/node_modules/.cache
+          key: ${{ runner.os }}-next-${{ hashFiles('crm/package-lock.json') }}-${{ hashFiles('crm/**.[jt]s', 'crm/**.[jt]sx') }}
+          restore-keys: |
+            ${{ runner.os }}-next-${{ hashFiles('crm/package-lock.json') }}-
+
+      - name: Install dependencies
+        working-directory: crm
+        # --legacy-peer-deps required: Tremor v3 pins older React peer; see crm/README.md
+        run: npm ci --legacy-peer-deps
+
+      - name: TypeScript check
+        working-directory: crm
+        run: npx tsc --noEmit
+
+      - name: Unit tests (Vitest)
+        working-directory: crm
+        # 242+ tests expected; do NOT regress below this
+        run: npm test -- --run
+
+      - name: Build (Next.js 16)
+        working-directory: crm
+        env:
+          # CI uses a placeholder; real DATABASE_URL only injected on actual deploys
+          DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+          APP_PASSWORD: ci-placeholder-do-not-use
+        run: npm run build
+
+      - name: Verify build output
+        working-directory: crm
+        run: |
+          test -d .next/server || (echo "::error::No .next/server output" && exit 1)
+          test -f .next/BUILD_ID || (echo "::error::No BUILD_ID" && exit 1)
+          echo "Build size:"
+          du -sh .next
