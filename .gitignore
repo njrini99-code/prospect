@@ -1,0 +1,41 @@
+# Whitelist .gitignore — exclude EVERYTHING by default, then explicitly re-include
+# only code + non-PII operational docs. Belt-and-suspenders against PII leakage.
+
+# 1) Block everything
+*
+
+# 2) Re-include only what's safe to publish
+!.gitignore
+!README.md
+!scripts/
+!scripts/**
+
+# Even within scripts, never include any local state files that happen to live there
+scripts/_*.txt
+scripts/_*.json
+scripts/__pycache__/
+scripts/*.pyc
+
+# Hard blocks that MUST stay excluded regardless of any future re-include attempt
+.env
+.env.*
+_sales_os_state.json
+*.xlsx
+*.xls
+*.xlsm
+*.csv
+*.tsv
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+verification_V*.json
+_weekly_xlsx_b64.txt
+*.~lock.*#
+.~lock.*
+.DS_Store
+.claude/
+_archive/
+apify_data/
+enrichment/
+MASTER/uploads_to_drive/
